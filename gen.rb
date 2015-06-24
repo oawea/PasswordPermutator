@@ -18,9 +18,27 @@ module Permutations
     end
     return_array
   end
-  
-  def capitolize_first word 
-    
+  def capitolizer word, args=[]
+    return_arr = []
+    tmp = word
+    if args.length > 0 #assuming that there will only be one arg, and the arg is number of letters to cap.
+      0.upto(args[0].to_i) do |x|
+        a = tmp[x].upcase
+        tmp[x] = a
+        return_arr.push(tmp)
+        tmp = word
+      end
+    else
+      return_arr.push(word.capitalize)
+    end
+    return_arr
+  end
+  def add_symbols word, args=[]
+    return_arr = []
+    syms = ["!", "?"]
+    args.each {|x| syms.push(x)} unless args === nil
+    syms.each {|x| return_arr.push("#{word}#{x}")}
+    return_arr
   end
   #end default permutations#
   #the following are helper methods for the default permutations (such as arg parsing)
@@ -42,33 +60,64 @@ module Permutations
       @word = word
     end
     def build_hash
-      @hash = PassUtils.new @word
-      @hash.set(word)
+      @util = PassUtils.new @word
+      @util.set(word)
     end
     def load_rules
       @rules = MutatorRules.new
     end
     def mutate
-      @rules.each do |rule|
-        
-      end       
+      @rules.rules.each do |rule|
+        tmparr = @rules.exec_rule rule, @word
+        k = tmparr.keys[0]
+        tmparr.each_value {|v| @util.perm_set(@word, k, v)}
+      end
+    end
+    def write_table
+      tb = @util.org
+      array_to_write = []
+      tb.each_key do |key|
+        tb[key].each {|x| array_to_write.push(x)}
+      end
+      array_to_write
     end
   end
 
-  class FileReader
-    def initialize path
+  class FileUtils
+    def initialize path, args={}
       fd = File.open(path, "r")
+      @out_path = args[:output_file] if args[:output_file]
       @base_strings = []
       fd.each_line{|x| @base_strings.push(x.chomp)}
     end
     def base_list
       @base_strings
     end
+    def write_out arr
+      outfd = File.open(@out_path, "w")
+      arr.each {|line| outfd.write("#{line}\n")}
+      puts "wrote to #{@out_path}"
+    end
   end
 
   class MutatorRules
     def initialize
-      @rules = []
+      @rules = [1,2,3] #defaults. num appender, capitolizer, !? etc adder.
+    end
+    def rules
+      @rules
+    end
+    def exec_rule rule, word
+      ret_val = {}
+      case rule
+        when 1
+          ret_val[rule] = number_append word 
+        when 2
+          ret_val[rule] = capitolizer word
+        when 3
+          ret_val[rule] = add_symbols word    
+      end
+      ret_val
     end
   end
 
@@ -79,14 +128,15 @@ module Permutations
       @table[word] = true
     end
     def perm_set base, code, str
-      if @organized[base] 
+      if @organized[base][code] 
         #@organized will house an array of obj 
         #with key being code 
         #described in def evaluate, and val (arr) being permuated strings        
+        @organized[base][code].push(str) 
       else
+        @organized[base][code] = []
         @organized[base][code].push(str) 
       end
-
     end
     def set word
       @table[word] = true
@@ -97,6 +147,9 @@ module Permutations
     end
     def set? word
       @table[word]
+    end
+    def org
+      @organized
     end
   end
 end

@@ -7,18 +7,24 @@ def help
   puts "./permscript.rb [passwordfile]"
 end
 
-def stage objects
-  #this is where the fun happens
 
+#for now, assume only one password is returned from file reader
+def stage objects, reader
+  #this is where the fun happens
+  obj = objects[0]
+  obj.build_hash
+  obj.load_rules
+  obj.mutate
+  reader.write_out(obj.write_table.flatten)
   #end the fun now!
 end
 
 def main path
   puts "welcome to the password permutator!"
-  reader = Permutations::FileReader.new path
+  reader = Permutations::FileUtils.new path, :output_file=>"passwords_output"
   mutator_objects = []
   reader.base_list.each {|pass| mutator_objects.push(Permutations::Mutator.new(pass))} 
-  stage mutator_objects
+  stage mutator_objects, reader
 end
 
 def parse_opts

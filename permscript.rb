@@ -11,12 +11,14 @@ end
 #for now, assume only one password is returned from file reader
 def stage objects, reader
   #this is where the fun happens
-  obj = objects[0]
-  obj.build_hash
-  obj.load_rules
-  obj.mutate
-  reader.write_out(obj.write_table.flatten)
-  #end the fun now!
+  objects.each do |obj|
+    obj.build_hash
+    obj.load_rules
+    obj.mutate
+    puts obj.write_table.flatten
+    #reader.write_out(obj.write_table.flatten) wont work with onjects.each -> obviously overwrites
+    #end the fun now!
+  end
 end
 
 def main path
